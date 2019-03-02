@@ -1,61 +1,75 @@
+/* A simple server in the internet domain using TCP
+   The port number is passed as an argument */
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#ifdef _WIN32
-#include <Windows.h>
-#else
+#include <string.h>
 #include <unistd.h>
-#endif
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
-#define port 6012
+void error(const char *msg)
+{
+    perror(msg);
+    exit(1);
+}
 
-int main(){
+int main(int argc, char *argv[])
+{
+     int sockfd, newsockfd, portno;
+     socklen_t clilen;
+     char buffer[256];
+     struct sockaddr_in serv_addr, cli_addr;
+     int n;
+     if (argc < 2) {
+         fprintf(stderr,"ERROR, no port provided\n");
+         exit(1);
+     }
+     sockfd = socket(AF_INET, SOCK_STREAM, 0);
+     if (sockfd < 0)
+        error("ERROR opening socket");
+     bzero((char *) &serv_addr, sizeof(serv_addr));
+     portno = atoi(argv[1]);
+     serv_addr.sin_family = AF_INET;
+     serv_addr.sin_addr.s_addr = INADDR_ANY;
+     serv_addr.sin_port = htons(portno);
+     if (bind(sockfd, (struct sockaddr *) &serv_addr,
+              sizeof(serv_addr)) < 0)
+              error("ERROR on binding");
+     listen(sockfd,5);
+     clilen = sizeof(cli_addr);
+     newsockfd = accept(sockfd,
+                 (struct sockaddr *) &cli_addr,
+                 &clilen);
+     if (newsockfd < 0)
+          error("ERROR on accept");
+     bzero(buffer,256);
+     n = read(newsockfd,buffer,255);
+     if (n < 0) error("ERROR reading from socket");
+     do {
+       if ((strcmp(buffer,"q\n") + 113 == 0) || (strcmp(buffer,"q\n") == 0))  break;
+			 printf("Here is client's choice: %s\n",buffer);
+			 if (strcmp(buffer,"R\n") == 0)	{
+					 printf("Here is the EMPIRE's choice: PAPER\n");
+					 printf("YOU LOSE.\n");
+					 n = write(newsockfd,"User Choice = Rock, EMPIRE CHOICE = PAPER, YOU LOSE.",52);
+			 }
+			 else if (strcmp(buffer,"P\n") == 0)	{
+					 printf("Here is the EMPIRE's choice: SCISSORS\n");
+					 printf("YOU LOSE.\n");
+					 n = write(newsockfd,"User Choice = Paper, EMPIRE CHOICE = SCISSORS, YOU LOSE.",56);
+			 }
+			 else {
+         printf("Here is the EMPIRE's choice: ROCK\n");
+         printf("YOU LOSE.\n");
+         n = write(newsockfd,"User Choice = Scissors, EMPIRE CHOICE = ROCK, YOU LOSE.",55);
+			 }
+	     if (n < 0) error("ERROR writing to socket");
+       bzero(buffer,256);
+			 n = read(newsockfd,buffer,255);
+		 } while(strcmp(buffer,"q\n") != 0);
 
-  char words[1025];
-  char input[1];
-  char pick;
-  struct sockaddr_in address;
-  int listenSock = socket(AF_INET, SOCK_STREAM, 0);
-  memset(&address, '0', sizeof(address));
-  memset(words, '0', sizeof(words));
-  address.sin_family = AF_INET;
-  address.sin_addr.s_addr = htonl(INADDR_ANY);
-  address.sin_port = htons(port);
-  bind(listenSock, (struct sockaddr*)&address,sizeof(address));
-  listen(listenSock, 10);
-
-  //int connSock = accept(listenSock, (struct sockaddr*)NULL ,NULL);
-  int connSock = accept(listenSock, (struct sockaddr*)NULL ,NULL);
-  while(1){
-      read(listenSock, input, 1);
-      if(!strcmp(input,"q")){
-         printf("Client has decided to quit.\nThanks for playing. Goodbye.");
-         break;
-      }
-      int num = rand()%3;
-      if(num==0){pick='R';}
-      else if(num==1){pick='P';}
-      else{pick='S';}
-
-      if(strcmp(pick,input)==0){
-         strcpy(words, "Opponent chose . You chose BLANK. You Tie! Play Again?");
-         printf("%s",input);
-      }
-      else if(strcmp(pick,input)>0){
-         strcpy(words, "FUCKYOU");
-         printf("%s",input);
-      }
-      else{
-         strcpy(words, "HellYEAH");
-         printf("Opponent chose BLANK. You chose BLANK. You Lose.");
-      }
-      write(connSock, words, strlen(words));
-   }
-   close(connSock);
-   return 0;
+     close(newsockfd);
+     close(sockfd);
+     return 0;
 }
