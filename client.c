@@ -17,8 +17,7 @@
 
 int main(){
 
-   char answer;
-   char answer2[2];
+   char answer2[1];
    char words[1024];
    struct sockaddr_in address;
    int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -30,15 +29,13 @@ int main(){
 
    while(strcmp(answer2,"q")){
       printf("Welcome to Rock-Paper-Scissors!\nPlease make your choice: [R]ock, [P]aper, [S]cissors, or [q]uit: ");
-      scanf("%c", &answer);
-      answer2[0] = answer;
-      answer2[1] = '\0';
+      scanf("%1s",answer2);
       if(!strcmp(answer2,"q")){
          break;
       }
       while(!strcmp(answer2,"R")&&!strcmp(answer2,"P")&&!strcmp(answer2,"S")&&!strcmp(answer2,"q")){
          printf("Incorrect input. Please make your choice: [R]ock, [P]aper, [S]cissors, or [q]uit: ");
-         scanf("%c", &answer);
+         scanf("%1s", answer2);
       }
       write(sock, answer2, 1);
       read(sock, words, strlen(words));

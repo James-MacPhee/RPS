@@ -33,7 +33,7 @@ int main(){
   int connSock = accept(listenSock, (struct sockaddr*)NULL ,NULL);
   while(1){
       read(listenSock, input, 1);
-      if(input[0]=='q'){
+      if(!strcmp(input,"q")){
          printf("Client has decided to quit.\nThanks for playing. Goodbye.");
          break;
       }
@@ -42,16 +42,16 @@ int main(){
       else if(num==1){pick='P';}
       else{pick='S';}
 
-      if(pick==input[0]){
+      if(strcmp(pick,input)==0){
          strcpy(words, "Opponent chose . You chose BLANK. You Tie! Play Again?");
          printf("%s",input);
       }
-      else if(pick>input[0]){
+      else if(strcmp(pick,input)>0){
          strcpy(words, "FUCKYOU");
          printf("%s",input);
       }
       else{
-         strcpy(words, "Opponent chose BLANK. You chose BLANK. You Win!! Play Again?");
+         strcpy(words, "HellYEAH");
          printf("Opponent chose BLANK. You chose BLANK. You Lose.");
       }
       write(connSock, words, strlen(words));
